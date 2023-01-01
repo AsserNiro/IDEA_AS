@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+    namespace:名称空间
+    id:指此SQL语句的在外唯一标识
+    resultType:返回对象
+-->
+<mapper namespace="com.mapper.studentMapper">
+    <!--    当数据表中的字段 和 java实体类的属性名字 不应不上时， 则无法自动匹配
+            解决方法是使用 resultMap
+                        1.定义<resultMap>标签
+                        2.使用resultMap属性替换resultType属性
+    -->
+    <!--
+        id:唯一标识
+        type:映射类型，支持别名
+      -->
+    <resultMap id="studentResultMap" type="com.entiy.student">
+        <!--
+        可用的两种标签
+            id: 完成主键字段的映射
+            result: 完成一般字段的映射
+
+        column: 数据表的类名
+        property: 实体类的属性名
+-->
+        <result column="recordTime" property="data"/>
+    </resultMap>
+
+
+
+    <select id="selectAll" resultMap="studentResultMap">
+        select * from t_record;
+    </select>
+
+    <!--
+        参数占位符
+            1. #{}: 会替换成?，防止sql注入攻击
+            2. ${}: 会拼接sql语句，存在sql注入攻击
+            3. 使用时机:
+                a.参数传递时用 #{}
+                b.表名或者列名不固定的情况下，可以使用${}，但同样存在sql注入攻击
+
+            4.特殊字符的处理方法
+                a.转义字符:适用小段特殊字符
+                b.CDATA区:适用打断字符
+    -->
+    <select id="selectById" resultMap="studentResultMap">
+        select * from t_record where id = #{id};
+    </select>
+
+
+    <select id="selectByName" resultMap="studentResultMap">
+        select *from t_record
+        <where>
+            <if test="name != null and name !=''">
+                name like #{name}
+            </if>
+            <if test="chinese != 0">
+                chinese = #{chinese}
+            </if>
+        </where>
+    </select>
+
+
+    <!--    <select id="selectAll" resultType="com.entiy.student">
+            select * from t_record ;
+        </select>-->
+<!--
+    useGeneratedKeys="true" keyProperty="id"如此设置，让sql语句完成之后可以返回对应的id值,keyProperty中所填写的是添加对象对应的值，如student
+-->
+    <insert id="add" useGeneratedKeys="true" keyProperty="id">
+        insert into t_record(name,chinese,math,eng,total,recordTime)
+            value(#{name},#{chinese},#{math},#{eng},#{total},#{data});
+    </insert>
+
+
+<!--    <update id="update">-->
+<!--        update t_record-->
+<!--        set-->
+<!--            name = #{name},-->
+<!--            chinese = #{chinese},-->
+<!--            math = #{math},-->
+<!--            eng = #{eng},-->
+<!--            total = #{total},-->
+<!--            recordTime = #{data}-->
+<!--        where id = #{id};-->
+<!--    </update>-->
+    <update id="update">
+        update t_record
+        <set>
+            <if test="name != null and name !=''">
+                name = #{name},
+            </if>
+            <if test="chinese != null">
+                chinese = #{chinese},
+            </if>
+            <if test="math != null">
+                math = #{math},
+            </if>
+            <if test="eng != null">
+                eng = #{eng},
+            </if>
+            <if test="total != null">
+                total = #{total},
+            </if>
+            <if test="data != null ">
+                recordTime = #{data}
+            </if>
+        </set>
+        where id = #{id};
+    </update>
+
+    <delete id="deleteById">
+        delete from t_record where id = #{id};
+    </delete>
+
+<!--    要需要动态sql完成
+        MyBatis的foreach会将数组，封装成一个MAp集合。
+            默认情况下， 键 为 array
+            但要自定义的化，在对应的mapper处，用@Param()注解的方式改变map集合中对应key的名称
+       有两种方法去写
+       第一种
+       in(
+        <foreach collection="ids" item="id" separator=",">
+            #{id}
+        </foreach>
+              );
+        第二种放在实际sql语句中
+-->
+    <delete id="deleteByIds">
+        delete from t_record
+        where id
+        in<foreach collection="ids" item="id" separator="," open="(" close=")">
+                #{id}
+            </foreach>;
+
+    </delete>
+
+</mapper>
